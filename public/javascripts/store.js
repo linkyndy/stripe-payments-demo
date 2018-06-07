@@ -59,6 +59,10 @@ class Store {
     products.forEach(product => (this.products[product.id] = product));
   }
 
+  async loadPlans() {
+    const plansResponse = await fetch('/plans');
+  }
+
   // Create an order object to represent the line items.
   async createOrder(currency, items, email, shipping) {
     try {
@@ -142,6 +146,7 @@ class Store {
   async displayOrderSummary() {
     // Fetch the products from the store to get all the details (name, price, etc.).
     await this.loadProducts();
+    return;
     const orderItems = document.getElementById('order-items');
     const orderTotal = document.getElementById('order-total');
     let currency;

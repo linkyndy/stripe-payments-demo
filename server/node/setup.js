@@ -24,52 +24,65 @@ module.exports = {
         // Create a few products and SKUs assuming they don't already exist.
         try {
           // Increment Magazine.
-          const increment = await stripe.products.create({
-            id: 'increment',
-            type: 'good',
-            name: 'Increment Magazine',
-            attributes: ['issue'],
+          const plus = await stripe.products.create({
+            id: 'plus',
+            type: 'service',
+            name: 'Plus'
           });
-          await stripe.skus.create({
-            id: 'increment-03',
-            product: 'increment',
-            attributes: {issue: 'Issue #3 “Development”'},
-            price: 399,
-            currency: config.currency,
-            inventory: {type: 'infinite'},
+          const plus_monthly = await stripe.plans.create({
+            amount: 1000,
+            interval: "month",
+            product: "plus",
+            currency: "eur",
+            nickname: "Monthly"
           });
+          const plus_yearly = await stripe.plans.create({
+            amount: 10000,
+            interval: "year",
+            product: "plus",
+            currency: "eur",
+            nickname: "Yearly"
+          });
+          // await stripe.skus.create({
+          //   id: 'increment-03',
+          //   product: 'increment',
+          //   attributes: {issue: 'Issue #3 “Development”'},
+          //   price: 399,
+          //   currency: config.currency,
+          //   inventory: {type: 'infinite'},
+          // });
 
           // Stripe Shirt.
-          const shirt = await stripe.products.create({
-            id: 'shirt',
-            type: 'good',
-            name: 'Stripe Shirt',
-            attributes: ['size', 'gender'],
-          });
-          await stripe.skus.create({
-            id: 'shirt-small-woman',
-            product: 'shirt',
-            attributes: {size: 'Small Standard', gender: 'Woman'},
-            price: 999,
-            currency: config.currency,
-            inventory: {type: 'infinite'},
-          });
+          // const shirt = await stripe.products.create({
+          //   id: 'shirt',
+          //   type: 'good',
+          //   name: 'Stripe Shirt',
+          //   attributes: ['size', 'gender'],
+          // });
+          // await stripe.skus.create({
+          //   id: 'shirt-small-woman',
+          //   product: 'shirt',
+          //   attributes: {size: 'Small Standard', gender: 'Woman'},
+          //   price: 999,
+          //   currency: config.currency,
+          //   inventory: {type: 'infinite'},
+          // });
 
           // Stripe Pins.
-          const pins = await stripe.products.create({
-            id: 'pins',
-            type: 'good',
-            name: 'Stripe Pins',
-            attributes: ['set'],
-          });
-          await stripe.skus.create({
-            id: 'pins-collector',
-            product: 'pins',
-            attributes: {set: 'Collector Set'},
-            price: 799,
-            currency: config.currency,
-            inventory: {type: 'finite', quantity: 500},
-          });
+          // const pins = await stripe.products.create({
+          //   id: 'pins',
+          //   type: 'good',
+          //   name: 'Stripe Pins',
+          //   attributes: ['set'],
+          // });
+          // await stripe.skus.create({
+          //   id: 'pins-collector',
+          //   product: 'pins',
+          //   attributes: {set: 'Collector Set'},
+          //   price: 799,
+          //   currency: config.currency,
+          //   inventory: {type: 'finite', quantity: 500},
+          // });
           console.log('Setup complete.');
           resolve();
           this.running = false;

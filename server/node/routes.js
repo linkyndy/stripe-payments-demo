@@ -11,7 +11,7 @@
 
 const config = require('./config');
 const setup = require('./setup');
-const {orders, products} = require('./inventory');
+const {orders, products, plans} = require('./inventory');
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(config.stripe.secretKey);
@@ -139,15 +139,15 @@ router.post('/webhook', async (req, res) => {
     const source = object;
     console.log(`🔔  Webhook received! The source ${source.id} is chargeable.`);
     // Find the corresponding order this source is for by looking in its metadata.
-    const order = await orders.retrieve(source.metadata.order);
+    // const order = await orders.retrieve(source.metadata.order);
     // Verify that this order actually needs to be paid.
-    if (
-      order.metadata.status === 'pending' ||
-      order.metadata.status === 'paid' ||
-      order.metadata.status === 'failed'
-    ) {
-      return res.sendStatus(403);
-    }
+    // if (
+    //   order.metadata.status === 'pending' ||
+    //   order.metadata.status === 'paid' ||
+    //   order.metadata.status === 'failed'
+    // ) {
+    //   return res.sendStatus(403);
+    // }
 
     // Note: We're setting an idempotency key below on the charge creation to
     // prevent any race conditions. It's set to the order ID, which protects us from
@@ -158,35 +158,45 @@ router.post('/webhook', async (req, res) => {
     // https://stripe.com/docs/sources/best-practices#charge-creation
 
     // Pay the order using the source we just received.
-    let charge, status;
+    // let charge, status;
+    let subscription;
     try {
-      charge = await stripe.charges.create(
+      // charge = await stripe.charges.create(
+      //   {
+      //     source: source.id,
+      //     amount: order.amount,
+      //     currency: order.currency,
+      //     receipt_email: order.email,
+      //   },
+      //   {
+      //     // Set a unique idempotency key based on the order ID.
+      //     // This is to avoid any race conditions with your webhook handler.
+      //     idempotency_key: order.id,
+      //   }
+      // );
+      subscription = stripe.subscriptions.create(
         {
+          customer: 'cus_CqGvAUMwZboOIh',
           source: source.id,
-          amount: order.amount,
-          currency: order.currency,
-          receipt_email: order.email,
-        },
-        {
-          // Set a unique idempotency key based on the order ID.
-          // This is to avoid any race conditions with your webhook handler.
-          idempotency_key: order.id,
+          items: [{plan: 'plan_D0KZ9kZxI3Ppxr'}],
         }
       );
+      console.log(`Subscription created.`);
+      console.log(subscription);
     } catch (err) {
       // This is where you handle declines and errors.
       // For the demo, we simply set the status to mark the order as failed.
       status = 'failed';
     }
-    if (charge && charge.status === 'succeeded') {
-      status = 'paid';
-    } else if (charge) {
-      status = charge.status;
-    } else {
-      status = 'failed';
-    }
-    // Update the order status based on the charge status.
-    await orders.update(order.id, {metadata: {status}});
+    // if (charge && charge.status === 'succeeded') {
+    //   status = 'paid';
+    // } else if (charge) {
+    //   status = charge.status;
+    // } else {
+    //   status = 'failed';
+    // }
+    // // Update the order status based on the charge status.
+    // await orders.update(order.id, {metadata: {status}});
   }
 
   // Monitor `charge.succeeded` events.
@@ -280,9 +290,27 @@ router.get('/products', async (req, res) => {
   }
 });
 
+// Retrieve all plans.
+// router.get('/plans', async (req, res) => {
+//   const planList = await plans.list();
+//   // Check if plans exist on Stripe Account.
+//   if (plans.exist(planList)) {
+//     res.json(planList);
+//   } else {
+//     // We need to set up the plans.
+//     await setup.run();
+//     res.json(await plans.list());
+//   }
+// });
+
 // Retrieve a product by ID.
 router.get('/products/:id', async (req, res) => {
   res.json(await products.retrieve(req.params.id));
 });
+
+// Retrieve a plan by ID.
+// router.get('/plans/:id', async (req, res) => {
+//   res.json(await plans.retrieve(req.params.id));
+// });
 
 module.exports = router;
